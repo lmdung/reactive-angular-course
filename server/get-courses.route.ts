@@ -11,13 +11,13 @@ export function getAllCourses(req: Request, res: Response) {
     console.log("ERROR loading courses!");
     res.status(500).json({message: 'random error occurred.'});
     return;
- */
+*/
 
         setTimeout(() => {
 
-             res.status(200).json({payload:Object.values(COURSES)});
+            res.status(200).json({payload:Object.values(COURSES)});
 
-        }, 200);
+        }, 1500); 
 }
 
 

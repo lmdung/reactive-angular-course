@@ -3,6 +3,8 @@ import {Course, sortCoursesBySeqNo} from '../model/course';
 import {interval, noop, Observable, of, throwError, timer} from 'rxjs';
 import {catchError, delay, delayWhen, filter, finalize, map, retryWhen, shareReplay, tap} from 'rxjs/operators';
 import { CoursesService } from '../services/courses.service';
+import { LoadingService } from '../loading/loading.service';
+import { MessagesService } from '../messages/messages.service';
 
 @Component({
   selector: 'home',
@@ -17,7 +19,9 @@ export class HomeComponent implements OnInit {
 
 
   constructor(
-    private courseService: CoursesService
+    private courseService: CoursesService,
+    private loadingService: LoadingService,
+    private messagesService: MessagesService
   ) {}
 
   ngOnInit() {
@@ -25,9 +29,20 @@ export class HomeComponent implements OnInit {
   }
   reloadCourses() {
     const courses$ = this.courseService.loadDataCourses()
-      .pipe(map(courses => courses.sort(sortCoursesBySeqNo)));
-    this.beginnerCourses$ = courses$.pipe(map(courses => courses.filter(course => course.category == "BEGINNER")))
-    this.advancedCourses$ = courses$.pipe(map(courses => courses.filter(course => course.category == "ADVANCED")))
+      .pipe(
+        map(courses => courses.sort(sortCoursesBySeqNo)),
+        catchError(err => {
+          let message = "Could not find courses";
+          this.messagesService.showError(message);
+          console.log(err, message);
+          return throwError(err)
+        })
+      );
+    const loadCourses$ = this.loadingService.showloaderUntilCompleted(courses$);
+    this.beginnerCourses$ = loadCourses$
+      .pipe(map(courses => courses.filter(course => course.category == "BEGINNER")))
+    this.advancedCourses$ = loadCourses$
+      .pipe(map(courses => courses.filter(course => course.category == "ADVANCED")))
   }
 }
 
